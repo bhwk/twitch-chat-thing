@@ -12,30 +12,44 @@
 
   let messages: Message[] = [];
   let client: tmi.Client;
-  let channels: string[] = [];
+  let targetChannels: string[] = [];
+  let joinedChannels: string[] = [];
   let value: string;
-  $: joinedChannels = channels;
 
-  function joinChannels(client: tmi.Client) {
-    client.getChannels().forEach(async (channel) => {
-      await client.part(channel).catch((err) => console.log(err));
-    });
-    channels.forEach(async (channel) => {
+  async function leaveChannel(client: tmi.Client, channel: string) {
+    await client
+      .part(channel)
+      .then(() => {
+        joinedChannels = joinedChannels.filter(
+          (joinedChannel) => joinedChannel != channel
+        );
+      })
+      .catch((err) => console.log(err));
+  }
+
+  async function joinChannels(client: tmi.Client) {
+    targetChannels.forEach(async (channel) => {
+      if (joinedChannels.includes(channel)) {
+        console.log("channel already joined");
+        return;
+      }
       await client
         .join(channel)
+        .then(() => joinedChannels.push(channel))
         .catch((err) => console.log("Could not join channel:", channel));
+      joinedChannels = joinedChannels;
     });
   }
 
   async function handleSubmit() {
-    channels = value
+    targetChannels = value
       .toLowerCase()
       .trim()
       .split(/\s*[,.\s]+\s*/);
     value = "";
 
-    channels = channels.filter((channel) => channel !== "");
-    console.log(channels);
+    targetChannels = targetChannels.filter((channel) => channel !== "");
+    console.log(targetChannels);
     joinChannels(client);
   }
 
@@ -45,17 +59,24 @@
       console.log("connected");
     });
 
-    client.on("join", (channel) => {
+    client.on("part", (channel, self) => {
+      if (!self) return;
+      console.log("Left :", channel);
+    });
+
+    client.on("join", (channel, self) => {
+      if (!self) return;
+
       console.log("Joined: ", channel);
       console.log(client.getChannels());
     });
 
-    client.on("message", (channel, userstate, message, self) => {
+    client.on("chat", (channel, userstate, message, self) => {
       messages.unshift({ channel, userstate, message });
       messages = messages;
     });
 
-    client.on("disconnected", (channel) => {
+    client.on("disconnected", () => {
       console.log("Disconnected from twitch servers");
     });
     await client.connect().catch((err) => {
@@ -68,31 +89,57 @@
   });
 </script>
 
-<div>
+<div id="container">
   <form on:submit|preventDefault={handleSubmit}>
     <input bind:value />
   </form>
 
-  <div class="chat-container">
-    {#each messages as message (message)}
-      <p transition:fade|local animate:flip>
-        [{message.channel}] {message.userstate.username}: {message.message}
-      </p>
-    {/each}
+  <div id="chat-container">
+    <div id="messages-container">
+      {#each messages as message (message)}
+        <div
+          transition:fade|local={{ duration: 50 }}
+          animate:flip={{ duration: 100 }}
+        >
+          <p>
+            <span>[{message.channel}] </span>
+            <span style="color: {message.userstate.color};"
+              >{message.userstate.username}:
+            </span>
+            {message.message}
+          </p>
+        </div>
+      {/each}
+    </div>
   </div>
   <div>
     {#each joinedChannels as channel (channel)}
       <div>{channel}</div>
+      <button
+        on:click={() => {
+          leaveChannel(client, channel);
+        }}>Leave</button
+      >
     {/each}
   </div>
 </div>
 
 <style>
-  .chat-container {
-    border: 1px solid black;
+  :root {
+    background-color: black;
+    color: white;
+  }
+  #container {
+    display: flex;
+    flex-direction: column;
+    align-items: normal;
+  }
+  #messages-container {
+    border: 1px solid gray;
     min-height: 30em;
     max-height: 30em;
     overflow: auto;
     scroll-behavior: auto;
+    color: white;
   }
 </style>
