@@ -37,7 +37,7 @@
         .join(channel)
         .then(() => joinedChannels.push(channel))
         .catch((err) => console.log("Could not join channel:", channel));
-    joinedChannels = joinedChannels;
+      joinedChannels = joinedChannels;
     });
   }
 
@@ -54,24 +54,25 @@
   }
 
   onMount(async () => {
-    const channels = JSON.parse(localStorage.getItem("channels"))
+    const channels = JSON.parse(localStorage.getItem("channels"));
     client = new tmi.Client({ channels: channels });
-    joinedChannels = channels
+    joinedChannels = channels;
     client.on("connected", () => {
       console.log("connected");
     });
 
     client.on("part", (channel, self) => {
-      if (!self) return;
-      console.log("Left :", channel);
-      localStorage.setItem("channels", JSON.stringify(client.getChannels()))
+      if (self) {
+        console.log("Left :", channel);
+        localStorage.setItem("channels", JSON.stringify(client.getChannels()));
+      }
     });
 
     client.on("join", (channel, self) => {
-      if (!self) return;
-
-      console.log("Joined: ", channel);
-      localStorage.setItem("channels", JSON.stringify(client.getChannels()))
+      if (self) {
+        console.log("Joined: ", channel);
+        localStorage.setItem("channels", JSON.stringify(client.getChannels()));
+      }
     });
 
     client.on("chat", (channel, userstate, message) => {
@@ -131,7 +132,9 @@
   :root {
     background-color: black;
     color: white;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+      Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue",
+      sans-serif;
   }
   #container {
     display: flex;
