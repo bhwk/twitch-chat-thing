@@ -37,7 +37,7 @@
         .join(channel)
         .then(() => joinedChannels.push(channel))
         .catch((err) => console.log("Could not join channel:", channel));
-      joinedChannels = joinedChannels;
+    joinedChannels = joinedChannels;
     });
   }
 
@@ -54,7 +54,9 @@
   }
 
   onMount(async () => {
-    client = new tmi.Client({});
+    const channels = JSON.parse(localStorage.getItem("channels"))
+    client = new tmi.Client({ channels: channels });
+    joinedChannels = channels
     client.on("connected", () => {
       console.log("connected");
     });
@@ -62,16 +64,17 @@
     client.on("part", (channel, self) => {
       if (!self) return;
       console.log("Left :", channel);
+      localStorage.setItem("channels", JSON.stringify(client.getChannels()))
     });
 
     client.on("join", (channel, self) => {
       if (!self) return;
 
       console.log("Joined: ", channel);
-      console.log(client.getChannels());
+      localStorage.setItem("channels", JSON.stringify(client.getChannels()))
     });
 
-    client.on("chat", (channel, userstate, message, self) => {
+    client.on("chat", (channel, userstate, message) => {
       messages.unshift({ channel, userstate, message });
       messages = messages;
     });
@@ -128,11 +131,13 @@
   :root {
     background-color: black;
     color: white;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
   }
   #container {
     display: flex;
     flex-direction: column;
     align-items: normal;
+    gap: 4px;
   }
   #messages-container {
     border: 1px solid gray;
@@ -141,5 +146,6 @@
     overflow: auto;
     scroll-behavior: auto;
     color: white;
+    padding: 0 1em;
   }
 </style>
