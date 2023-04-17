@@ -35,7 +35,7 @@
       }
       await client
         .join(channel)
-        .then(() => joinedChannels.push(channel))
+        .then(() => joinedChannels.push("#" + channel))
         .catch((err) => console.log("Could not join channel:", channel));
       joinedChannels = joinedChannels;
     });
@@ -61,14 +61,14 @@
       console.log("connected");
     });
 
-    client.on("part", (channel, self) => {
+    client.on("part", (channel, username, self) => {
       if (self) {
         console.log("Left :", channel);
         localStorage.setItem("channels", JSON.stringify(client.getChannels()));
       }
     });
 
-    client.on("join", (channel, self) => {
+    client.on("join", (channel, username, self) => {
       if (self) {
         console.log("Joined: ", channel);
         localStorage.setItem("channels", JSON.stringify(client.getChannels()));
@@ -95,7 +95,8 @@
 
 <div id="container">
   <form on:submit|preventDefault={handleSubmit}>
-    <input bind:value />
+    <label for="channels">Enter channel(s)</label>
+    <input name="channels" bind:value />
   </form>
 
   <div id="chat-container">
@@ -117,13 +118,16 @@
     </div>
   </div>
   <div>
+    <div>Joined Channels</div>
     {#each joinedChannels as channel (channel)}
-      <div>{channel}</div>
-      <button
-        on:click={() => {
-          leaveChannel(client, channel);
-        }}>Leave</button
-      >
+      <div>
+        <span>{channel}</span>
+        <button
+          on:click={() => {
+            leaveChannel(client, channel);
+          }}>Leave</button
+        >
+      </div>
     {/each}
   </div>
 </div>
