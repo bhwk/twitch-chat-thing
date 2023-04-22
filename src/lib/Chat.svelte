@@ -76,8 +76,7 @@
     });
 
     client.on("chat", (channel, userstate, message) => {
-      messages.unshift({ channel, userstate, message });
-      messages = messages;
+      messages = [{ channel, userstate, message }, ...messages];
     });
 
     client.on("disconnected", () => {
@@ -106,13 +105,13 @@
           transition:fade|local={{ duration: 50 }}
           animate:flip={{ duration: 100 }}
         >
-          <p>
-            <span>[{message.channel}] </span>
-            <span style="color: {message.userstate.color};"
-              >{message.userstate.username}:
-            </span>
+          <span>[{message.channel}] </span>
+          <span style="color: {message.userstate.color};"
+            >{message.userstate.username}:
+          </span>
+          <span>
             {message.message}
-          </p>
+          </span>
         </div>
       {/each}
     </div>
@@ -141,18 +140,25 @@
       sans-serif;
   }
   #container {
+    max-height: 100%;
     display: flex;
     flex-direction: column;
     align-items: normal;
     gap: 4px;
   }
+  #messages-container::-webkit-scrollbar {
+    display: none;
+  }
   #messages-container {
+    display: flex;
+    flex-direction: column-reverse;
     border: 1px solid gray;
     min-height: 30em;
     max-height: 30em;
-    overflow: auto;
-    scroll-behavior: auto;
+    overflow-y: scroll;
     color: white;
-    padding: 0 1em;
+    padding: 1em 1em;
+    gap: 1rem;
+    scrollbar-width: none;
   }
 </style>
